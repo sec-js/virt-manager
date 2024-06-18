@@ -9,9 +9,11 @@
   <memory>65536</memory>
   <currentMemory>65536</currentMemory>
   <vcpu>2</vcpu>
-  <os firmware="efi">
+  <os>
     <type arch="riscv64" machine="virt">hvm</type>
-    <boot dev="hd"/>
+    <kernel>/kernel.img</kernel>
+    <initrd>/initrd.img</initrd>
+    <cmdline>root=/dev/vda2</cmdline>
   </os>
   <clock offset="utc"/>
   <devices>
@@ -47,21 +49,6 @@
       <source mode="bind"/>
       <target type="virtio" name="org.qemu.guest_agent.0"/>
     </channel>
-    <channel type="spicevmc">
-      <target type="virtio" name="com.redhat.spice.0"/>
-    </channel>
-    <input type="tablet" bus="usb"/>
-    <input type="keyboard" bus="usb"/>
-    <tpm>
-      <backend type="emulator"/>
-    </tpm>
-    <graphics type="spice" port="-1" tlsPort="-1" autoport="yes">
-      <image compression="off"/>
-    </graphics>
-    <sound model="ich9"/>
-    <video>
-      <model type="virtio"/>
-    </video>
     <memballoon model="virtio"/>
     <rng model="virtio">
       <backend model="random">/dev/urandom</backend>

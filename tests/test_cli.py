@@ -73,6 +73,7 @@ TEST_DATA = {
     'URI-KVM-X86': utils.URIs.kvm_x86,
     'URI-KVM-ARMV7L': utils.URIs.kvm_armv7l,
     'URI-KVM-AARCH64': utils.URIs.kvm_aarch64,
+    'URI-KVM-LOONGARCH64': utils.URIs.kvm_loongarch64,
     'URI-KVM-PPC64LE': utils.URIs.kvm_ppc64le,
     'URI-KVM-S390X': utils.URIs.kvm_s390x,
     'URI-QEMU-RISCV64': utils.URIs.qemu_riscv64,
@@ -704,9 +705,6 @@ source.reservations.managed=no,source.reservations.source.type=unix,source.reser
 --hostdev wlan0,type=net
 --hostdev /dev/vdz,type=storage
 --hostdev /dev/pty7,type=misc
---hostdev mdev_8e37ee90_2b51_45e3_9b25_bf8283c03110,address.type=ccw,address.cssid=0xfe,address.ssid=0x1,address.devno=0x0008
---hostdev mdev_11f92c9d_b0b0_4016_b306_a8071277f8b9
---hostdev mdev_4b20d080_1b54_4048_85b3_a6a62d165c01,address.type=pci,address.domain=0x0000,address.bus=0x01,address.slot=0x01,address.function=0x0,address.zpci.uid=0x0001,address.zpci.fid=0x00000001
 
 
 --filesystem /source,/target,alias.name=testfsalias,driver.ats=on,driver.iommu=off,driver.packed=on,driver.page_per_vq=off
@@ -804,6 +802,13 @@ source.reservations.managed=no,source.reservations.source.type=unix,source.reser
 
 
 """, "many-devices", predefine_check="8.4.0")
+
+# Need to extract from the many-devices test as it was fixed in libvirt 10.4.0
+c.add_compare("""
+--hostdev mdev_8e37ee90_2b51_45e3_9b25_bf8283c03110,address.type=ccw,address.cssid=0xfe,address.ssid=0x1,address.devno=0x0008
+--hostdev mdev_11f92c9d_b0b0_4016_b306_a8071277f8b9
+--hostdev mdev_4b20d080_1b54_4048_85b3_a6a62d165c01,address.type=pci,address.domain=0x0000,address.bus=0x01,address.slot=0x01,address.function=0x0,address.zpci.uid=0x0001,address.zpci.fid=0x00000001
+""", "mdev-devices", prerun_check="10.4.0")
 
 
 # Specific XML test cases #1
@@ -925,6 +930,7 @@ c = vinst.add_category("storage", "--pxe --nographics --noautoconsole --hvm --os
 c.add_valid("--disk %(COLLIDE)s --check path_in_use=off")  # Colliding storage with --check
 c.add_valid("--disk %(COLLIDE)s --force")  # Colliding storage with --force
 c.add_valid("--disk %(NEWIMG1)s,sparse=true,size=100000000 --check disk_size=off")  # Don't warn about fully allocated file exceeding disk space
+c.add_valid("--disk file://%(NEWIMG1)s,size=1")  # Check that 'file://' prefix is removed correctly
 c.add_invalid("--disk /dev/zero --nodisks", grep="Cannot specify storage and use --nodisks")
 c.add_invalid("--file %(NEWIMG1)s --file-size 100000 --nonsparse", grep="There is not enough free space")  # Nonexisting file, size too big
 c.add_invalid("--file %(NEWIMG1)s --file-size 100000", grep="The requested volume capacity will exceed the")  # Huge file, sparse, but no prompting
@@ -1166,8 +1172,12 @@ c.add_compare("--connect %(URI-KVM-S390X)s --arch s390x --nographics --import --
 # riscv tests #
 ###############
 
-c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --os-variant fedora29 --import --disk %(EXISTIMG1)s --network default --graphics none", "riscv64-headless", precompare_check="5.3.0")
-c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --os-variant fedora29 --import --disk %(EXISTIMG1)s --network default --graphics vnc", "riscv64-graphics", precompare_check="5.3.0", )
+c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --network default --graphics none", "riscv64-headless")
+c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --network default --graphics spice", "riscv64-graphics")
+c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --boot kernel=/kernel.img,initrd=/initrd.img,cmdline='root=/dev/vda2'", "riscv64-kernel-boot")
+c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --cloud-init", "riscv64-cloud-init")
+c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --osinfo fedora29 --cdrom %(ISO-F26-NETINST)s", "riscv64-cdrom")
+c.add_compare("--connect %(URI-QEMU-RISCV64)s --arch riscv64 --osinfo fedora29 --unattended", "riscv64-unattended")
 
 
 
@@ -1195,6 +1205,19 @@ c.add_compare("--connect %(URI-KVM-AARCH64)s --disk %(EXISTIMG1)s --import --os-
 c.add_compare("--connect %(URI-KVM-AARCH64)s --disk size=1 --os-variant fedora22 --features gic_version=host --network network=default,address.type=pci --controller type=scsi,model=virtio-scsi,address.type=pci", "aarch64-kvm-gic")
 c.add_compare("--connect %(URI-KVM-AARCH64)s --osinfo fedora30 --arch aarch64 --disk none --pxe --boot firmware=efi", "aarch64-firmware-no-override")
 c.add_compare("--connect %(URI-KVM-AARCH64)s --disk %(EXISTIMG1)s --os-variant fedora28 --cloud-init", "aarch64-cloud-init")
+
+
+
+#####################
+# loongarch64 tests #
+#####################
+
+c.add_compare("--connect %(URI-KVM-LOONGARCH64)s --arch loongarch64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --network default --graphics none", "loongarch64-headless")
+c.add_compare("--connect %(URI-KVM-LOONGARCH64)s --arch loongarch64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --network default --graphics spice", "loongarch64-graphics")
+c.add_compare("--connect %(URI-KVM-LOONGARCH64)s --arch loongarch64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --boot kernel=/kernel.img,initrd=/initrd.img,cmdline='root=/dev/vda2'", "loongarch64-kernel-boot")
+c.add_compare("--connect %(URI-KVM-LOONGARCH64)s --arch loongarch64 --osinfo fedora29 --import --disk %(EXISTIMG1)s --cloud-init", "loongarch64-cloud-init")
+c.add_compare("--connect %(URI-KVM-LOONGARCH64)s --arch loongarch64 --osinfo fedora29 --cdrom %(ISO-F26-NETINST)s", "loongarch64-cdrom")
+c.add_compare("--connect %(URI-KVM-LOONGARCH64)s --arch loongarch64 --osinfo fedora29 --unattended", "loongarch64-unattended")
 
 
 
@@ -1469,7 +1492,7 @@ c.add_compare("--remove-device --disk /dev/null", "remove-disk-path")
 c.add_compare("--remove-device --video all", "remove-video-all")
 c.add_compare("--remove-device --host-device 0x04b3:0x4485", "remove-hostdev-name")
 c.add_compare("--remove-device --memballoon all", "remove-memballoon")
-c.add_compare("--add-device --hostdev mdev_8e37ee90_2b51_45e3_9b25_bf8283c03110", "add-hostdev-mdev")
+c.add_compare("--add-device --hostdev mdev_8e37ee90_2b51_45e3_9b25_bf8283c03110", "add-hostdev-mdev", prerun_check="10.4.0")
 c.add_compare("--remove-device --hostdev mdev_b1ae8bf6_38b0_4c81_9d44_78ce3f520496", "remove-hostdev-mdev")
 
 c = vixml.add_category("add/rm devices and start", "test-state-shutoff --print-diff --start")
@@ -1481,7 +1504,7 @@ c.add_compare("--define --add-device --host-device usb_device_4b3_4485_noserial"
 c.add_compare("--add-device --disk %(EXISTIMG1)s,bus=virtio,target=vdf", "add-disk-basic-start")
 c.add_compare("--add-device --disk %(NEWIMG1)s,size=.01", "add-disk-create-storage-start")
 c.add_compare("--remove-device --disk /dev/null", "remove-disk-path-start")
-c.add_compare("--add-device --hostdev mdev_8e37ee90_2b51_45e3_9b25_bf8283c03110", "add-hostdev-mdev-start")
+c.add_compare("--add-device --hostdev mdev_8e37ee90_2b51_45e3_9b25_bf8283c03110", "add-hostdev-mdev-start", prerun_check="10.4.0")
 
 c = vixml.add_category("add/rm devices OS KVM", "--connect %(URI-KVM-X86)s test --print-diff --define")
 c.add_compare("--add-device --disk %(EXISTIMG1)s", "kvm-add-disk-os-from-xml")  # Guest OS (none) from XML

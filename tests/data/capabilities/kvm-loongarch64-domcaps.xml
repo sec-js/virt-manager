@@ -1,16 +1,16 @@
 <domainCapabilities>
-  <path>/usr/bin/qemu-system-riscv64</path>
-  <domain>qemu</domain>
+  <path>/usr/bin/qemu-system-loongarch64</path>
+  <domain>kvm</domain>
   <machine>virt</machine>
-  <arch>riscv64</arch>
-  <vcpu max='512'/>
+  <arch>loongarch64</arch>
+  <vcpu max='256'/>
   <iothreads supported='yes'/>
   <os supported='yes'>
     <enum name='firmware'>
       <value>efi</value>
     </enum>
     <loader supported='yes'>
-      <value>/usr/share/edk2/riscv/RISCV_VIRT_CODE.qcow2</value>
+      <value>/usr/share/edk2/loongarch64/QEMU_CODE.fd</value>
       <enum name='type'>
         <value>rom</value>
         <value>pflash</value>
@@ -25,7 +25,11 @@
     </loader>
   </os>
   <cpu>
-    <mode name='host-passthrough' supported='no'/>
+    <mode name='host-passthrough' supported='yes'>
+      <enum name='hostPassthroughMigratable'>
+        <value>off</value>
+      </enum>
+    </mode>
     <mode name='maximum' supported='yes'>
       <enum name='maximumMigratable'>
         <value>on</value>
@@ -34,15 +38,9 @@
     </mode>
     <mode name='host-model' supported='no'/>
     <mode name='custom' supported='yes'>
-      <model usable='unknown' vendor='unknown'>rv64</model>
-      <model usable='unknown' vendor='unknown'>sifive-e51</model>
-      <model usable='unknown' vendor='unknown'>any</model>
-      <model usable='unknown' vendor='unknown'>x-rv128</model>
-      <model usable='unknown' vendor='unknown'>shakti-c</model>
+      <model usable='unknown' vendor='unknown'>la464</model>
       <model usable='unknown' vendor='unknown'>max</model>
-      <model usable='unknown' vendor='unknown'>thead-c906</model>
-      <model usable='unknown' vendor='unknown'>sifive-u54</model>
-      <model usable='unknown' vendor='unknown'>veyron-v1</model>
+      <model usable='unknown' vendor='unknown'>la132</model>
     </mode>
   </cpu>
   <memoryBacking supported='yes'>
@@ -129,20 +127,7 @@
         <value>virtiofs</value>
       </enum>
     </filesystem>
-    <tpm supported='yes'>
-      <enum name='model'>
-        <value>tpm-tis</value>
-      </enum>
-      <enum name='backendModel'>
-        <value>passthrough</value>
-        <value>emulator</value>
-        <value>external</value>
-      </enum>
-      <enum name='backendVersion'>
-        <value>1.2</value>
-        <value>2.0</value>
-      </enum>
-    </tpm>
+    <tpm supported='no'/>
     <redirdev supported='yes'>
       <enum name='bus'>
         <value>usb</value>

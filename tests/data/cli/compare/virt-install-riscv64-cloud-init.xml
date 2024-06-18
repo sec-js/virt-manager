@@ -1,23 +1,20 @@
-<domain type="kvm">
-  <name>fedora28</name>
+<domain type="qemu">
+  <name>fedora29-riscv64</name>
   <uuid>00000000-1111-2222-3333-444444444444</uuid>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
-      <libosinfo:os id="http://fedoraproject.org/fedora/28"/>
+      <libosinfo:os id="http://fedoraproject.org/fedora/29"/>
     </libosinfo:libosinfo>
   </metadata>
   <memory>65536</memory>
   <currentMemory>65536</currentMemory>
   <vcpu>2</vcpu>
-  <os>
-    <type arch="aarch64" machine="virt">hvm</type>
-    <loader readonly="yes" type="pflash">/usr/share/AAVMF/AAVMF_CODE.fd</loader>
-    <smbios mode="sysinfo"/>
+  <os firmware="efi">
+    <type arch="riscv64" machine="virt">hvm</type>
   </os>
-  <cpu mode="host-passthrough"/>
   <clock offset="utc"/>
   <devices>
-    <emulator>/usr/bin/qemu-system-aarch64</emulator>
+    <emulator>/usr/bin/qemu-system-riscv64</emulator>
     <disk type="file" device="disk">
       <driver name="qemu" type="qcow2"/>
       <source file="/pool-dir/testvol1.img"/>
@@ -61,33 +58,26 @@
     </disk>
     <controller type="scsi" model="virtio-scsi"/>
   </devices>
-  <sysinfo type="smbios">
-    <system>
-      <entry name="serial">ds=nocloud</entry>
-    </system>
-  </sysinfo>
   <on_reboot>destroy</on_reboot>
 </domain>
-<domain type="kvm">
-  <name>fedora28</name>
+<domain type="qemu">
+  <name>fedora29-riscv64</name>
   <uuid>00000000-1111-2222-3333-444444444444</uuid>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
-      <libosinfo:os id="http://fedoraproject.org/fedora/28"/>
+      <libosinfo:os id="http://fedoraproject.org/fedora/29"/>
     </libosinfo:libosinfo>
   </metadata>
   <memory>65536</memory>
   <currentMemory>65536</currentMemory>
   <vcpu>2</vcpu>
-  <os>
-    <type arch="aarch64" machine="virt">hvm</type>
-    <loader readonly="yes" type="pflash">/usr/share/AAVMF/AAVMF_CODE.fd</loader>
+  <os firmware="efi">
+    <type arch="riscv64" machine="virt">hvm</type>
     <boot dev="hd"/>
   </os>
-  <cpu mode="host-passthrough"/>
   <clock offset="utc"/>
   <devices>
-    <emulator>/usr/bin/qemu-system-aarch64</emulator>
+    <emulator>/usr/bin/qemu-system-riscv64</emulator>
     <disk type="file" device="disk">
       <driver name="qemu" type="qcow2"/>
       <source file="/pool-dir/testvol1.img"/>
